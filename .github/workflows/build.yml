@@ -6,12 +6,6 @@ on:
       - "v*.*.*"
   
   workflow_dispatch:
-    inputs:
-      mode:
-        description: 'Mode de compilation (debug/release)'
-        required: true
-        default: 'release'
-        type: choice
 
 jobs:
   build:
