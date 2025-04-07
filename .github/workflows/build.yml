@@ -1,9 +1,9 @@
-name: Build and Release
+name: Build for Windows
 
 on:
   push:
     tags:
-      - "v*.*.*
+      - "v*.*.*"
 
 jobs:
   build:
