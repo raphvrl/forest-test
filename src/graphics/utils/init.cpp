@@ -306,6 +306,8 @@ VkQueue getPresentQueue(
     return queue;
 }
 
+#ifndef NDEBUG
+
 static VkResult CreateDebugUtilsMessengerEXT(
     VkInstance instance,
     const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
@@ -356,6 +358,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
+#endif
+
 VkDebugUtilsMessengerEXT createDebugMessenger(VkInstance instance)
 {
 #ifndef NDEBUG
@@ -380,6 +384,7 @@ VkDebugUtilsMessengerEXT createDebugMessenger(VkInstance instance)
     
     return debugMessenger;
 #else
+    UNUSED(instance);
     return VK_NULL_HANDLE;
 #endif
 }
