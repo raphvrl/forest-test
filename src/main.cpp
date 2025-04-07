@@ -1,9 +1,17 @@
 #include <iostream>
-
 #include "core/game.hpp"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 int main()
 {
+#ifdef _WIN32
+    SetDllDirectoryW(L"bin");
+#endif
+
+
     try {
         core::Game game;
         game.run();
