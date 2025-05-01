@@ -41,15 +41,6 @@ void Game::run()
         ) {
             m_running = false;
         }
-
-        auto cmd = m_device.beginFrame();
-        if (cmd) {
-            m_pipeline.bind(cmd);
-
-            vkCmdDraw(cmd, 3, 1, 0, 0);
-
-            m_device.endFrame();
-        }
     }
 }
 

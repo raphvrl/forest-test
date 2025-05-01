@@ -14,6 +14,13 @@ void Buffer::init(
     m_device = &device;
     m_size = size;
 
+    if (m_size == 0) {
+        m_size = 0;
+        m_buffer = VK_NULL_HANDLE;
+        m_allocation = VK_NULL_HANDLE;
+        return;
+    }
+
     VmaAllocationCreateInfo allocInfo{};
     allocInfo.usage = memoryUsage;
 
@@ -39,6 +46,10 @@ void Buffer::init(
 
 void Buffer::destroy()
 {
+    if (m_buffer == VK_NULL_HANDLE) {
+        return;
+    }
+
     if (m_isMapped) {
         unmap();
     }
@@ -52,6 +63,10 @@ void Buffer::destroy()
 
 void *Buffer::map()
 {
+    if (m_buffer == VK_NULL_HANDLE) {
+        return nullptr;
+    }
+
     if (m_isMapped) {
         return m_data;
     }

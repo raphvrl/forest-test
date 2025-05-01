@@ -5,6 +5,7 @@ namespace gfx
 
 Pipeline::Builder::Builder(Device &device) : m_device(device)
 {
+    m_colorFormat = device.getSwapchain().getFormat();
 }
 
 Pipeline::Builder &Pipeline::Builder::setShader(
@@ -41,11 +42,13 @@ Pipeline::Builder &Pipeline::Builder::setColorFormat(VkFormat format)
     return *this;
 }
 
-Pipeline::Builder &Pipeline::Builder::addPushConstantRange(
-    VkPushConstantRange range
-)
+Pipeline::Builder &Pipeline::Builder::setPushConstant(u32 size)
 {
-    m_pushConstantRanges.push_back(range);
+    m_pushConstantRanges.size = size;
+    m_pushConstantRanges.offset = 0;
+    m_pushConstantRanges.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+    m_pushConstantSet = true;
+
     return *this;
 }
 
@@ -58,6 +61,51 @@ Pipeline::Builder &Pipeline::Builder::setDepthTest(bool enable)
 Pipeline::Builder &Pipeline::Builder::setDepthWrite(bool enable)
 {
     m_depthWrite = enable;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setCullMode(VkCullModeFlags mode)
+{
+    m_cullMode = mode;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setCull(bool enable)
+{
+    m_cull = enable;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setBlending(bool enable)
+{
+    m_blending = enable;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setBlendingMode(
+    VkBlendFactor src,
+    VkBlendFactor dst,
+    VkBlendOp op
+)
+{
+    m_blendDst = dst;
+    m_blendSrc = src;
+    m_blendOp = op;
+
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setTopology(
+    VkPrimitiveTopology topology
+)
+{
+    m_topology = topology;
+    return *this;
+}
+
+Pipeline::Builder &Pipeline::Builder::setLineWidth(f32 width)
+{
+    m_lineWidth = width;
     return *this;
 }
 
@@ -75,7 +123,7 @@ Pipeline Pipeline::Builder::build()
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.topology = m_topology;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     VkPipelineRenderingCreateInfoKHR renderingInfo{};
@@ -94,8 +142,12 @@ Pipeline Pipeline::Builder::build()
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_NONE;
+    rasterizer.lineWidth = m_lineWidth;
+    if (m_cull) {
+        rasterizer.cullMode = m_cullMode;
+    } else {
+        rasterizer.cullMode = VK_CULL_MODE_NONE;
+    }
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -105,8 +157,18 @@ Pipeline Pipeline::Builder::build()
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
+    colorBlendAttachment.colorWriteMask = 
+        VK_COLOR_COMPONENT_R_BIT |
+        VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT |
+        VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.blendEnable = m_blending ? VK_TRUE : VK_FALSE;
+    colorBlendAttachment.srcColorBlendFactor = m_blendSrc;
+    colorBlendAttachment.dstColorBlendFactor = m_blendDst;
+    colorBlendAttachment.colorBlendOp = m_blendOp;
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
     VkPipelineColorBlendStateCreateInfo colorBlending{};
     colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -126,7 +188,8 @@ Pipeline Pipeline::Builder::build()
 
     std::vector<VkDynamicState> dynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_LINE_WIDTH,
     };
 
     VkPipelineDynamicStateCreateInfo dynamicState{};
@@ -141,10 +204,8 @@ Pipeline Pipeline::Builder::build()
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = static_cast<u32>(
-        m_pushConstantRanges.size()
-    );
-    pipelineLayoutInfo.pPushConstantRanges = m_pushConstantRanges.data();
+    pipelineLayoutInfo.pushConstantRangeCount = m_pushConstantSet ? 1 : 0;
+    pipelineLayoutInfo.pPushConstantRanges = &m_pushConstantRanges;
 
     VkResult res = vkCreatePipelineLayout(
         m_device.getDevice(),
@@ -194,6 +255,7 @@ Pipeline Pipeline::Builder::build()
     pipelineObj.m_pipeline = pipeline;
     pipelineObj.m_pipelineLayout = pipelineLayout;
     pipelineObj.m_descriptorSet = bindlessManager.getDescriptorSet();
+    pipelineObj.m_lineWidth = m_lineWidth;
 
     return pipelineObj;
 }
@@ -257,23 +319,8 @@ void Pipeline::bind(VkCommandBuffer cmd)
         0,
         nullptr
     );
-}
 
-void Pipeline::push(
-    VkCommandBuffer cmd,
-    VkShaderStageFlagBits stage,
-    VkDeviceSize size,
-    void *data
-)
-{
-    vkCmdPushConstants(
-        cmd,
-        m_pipelineLayout,
-        stage,
-        0,
-        size,
-        data
-    );
+    vkCmdSetLineWidth(cmd, m_lineWidth);
 }
 
 } // namespace gfx

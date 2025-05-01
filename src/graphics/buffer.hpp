@@ -22,6 +22,8 @@ public:
 
     void destroy();
 
+    bool isValid() const { return m_buffer != VK_NULL_HANDLE; }
+
     void *map();
     void unmap();
 
@@ -30,6 +32,9 @@ public:
 
     template<typename T>
     void uploadData(const std::vector<T>& data);
+
+    template<typename T, usize N>
+    void uploadData(const std::array<T, N>& data);
 
 public:
     VkBuffer getBuffer() const { return m_buffer; }
@@ -61,6 +66,10 @@ private:
 template<typename T>
 void Buffer::uploadData(const T *data, u32 count)
 {
+    if (m_buffer == VK_NULL_HANDLE) {
+        return;
+    }
+
     VkDeviceSize size = sizeof(T) * count;
     if (size > m_size) {
         throw std::runtime_error("Buffer size is too small for upload data.");
@@ -72,11 +81,15 @@ void Buffer::uploadData(const T *data, u32 count)
 }
 
 template<typename T>
-void Buffer::uploadData(const std::vector<T>& data)
+void Buffer::uploadData(const std::vector<T> &data)
 {
     uploadData(data.data(), static_cast<u32>(data.size()));
 }
 
-
+template<typename T, usize N>
+void Buffer::uploadData(const std::array<T, N> &data)
+{
+    uploadData(data.data(), static_cast<u32>(data.size()));
+}
 
 } // namespace gfx

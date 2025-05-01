@@ -330,16 +330,20 @@ void Image::init(
 
 void Image::init(
     Device &device,
-    const std::string &filepath,
+    const fs::path &filepath,
     VkFormat format,
     VkImageUsageFlags additionalUsage,
     bool mipmaps,
     VkImageAspectFlags aspectFlags
 )
 {
+    m_device = &device;
+
+    stbi_set_flip_vertically_on_load(true);
+
     int width, height, channels;
     stbi_uc *pixels = stbi_load(
-        filepath.c_str(),
+        filepath.string().c_str(),
         &width,
         &height,
         &channels,
@@ -347,7 +351,9 @@ void Image::init(
     );
 
     if (!pixels) {
-        throw std::runtime_error("Failed to load image file: " + filepath);
+        throw std::runtime_error(
+            "Failed to load image file: " + filepath.string()
+        );
     }
 
     VkDeviceSize imageSize = width * height * 4;
@@ -410,6 +416,7 @@ void Image::init(
         );
     }
 
+    m_imageView = createView(format, aspectFlags);
     stagingBuffer.destroy();
 }
 

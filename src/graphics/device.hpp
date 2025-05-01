@@ -1,6 +1,7 @@
 #pragma once
 
-#include "core/window.hpp"
+#include "core/types.hpp"
+#include "core/window/window.hpp"
 #include "utils/init.hpp"
 #include "global.hpp"
 #include "swapchain.hpp"
@@ -27,7 +28,14 @@ public:
     void destroy();
 
     VkCommandBuffer beginFrame();
-    void endFrame();
+    void endFrame(VkCommandBuffer cmd);
+
+
+    void beginRenderClear(VkCommandBuffer cmd);
+    void beginRenderLoad(VkCommandBuffer cmd);
+
+    void beginRender(VkCommandBuffer cmd, VkAttachmentLoadOp loadOp);
+    void endRender(VkCommandBuffer cmd);
 
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
@@ -58,7 +66,7 @@ public:
     );
 
     Image loadImage(
-        const std::string& filepath,
+        const fs::path &filepath,
         VkFormat format = VK_FORMAT_R8G8B8A8_SRGB,
         VkImageUsageFlags additionalUsage = 0,
         bool mipmaps = true,
@@ -75,6 +83,44 @@ public:
         VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT
     );
 
+    u32 addUBO(
+        const Buffer &buffer,
+        VkDeviceSize offset = 0,
+        VkDeviceSize range = 0
+    ) {
+        return m_bindlessManager.addUBO(buffer, offset, range);
+    }
+
+    u32 addSSBO(
+        const Buffer &buffer,
+        VkDeviceSize offset = 0,
+        VkDeviceSize range = 0
+    ) {
+        return m_bindlessManager.addSSBO(buffer, offset, range);
+    }
+
+    u32 addTexture(
+        const Image &image,
+        VkSampler sampler = VK_NULL_HANDLE
+    ) {
+        return m_bindlessManager.addTexture(image, sampler);
+    }
+
+    void removeResource(u32 id)
+    {
+        m_bindlessManager.removeResource(id);
+    }
+
+    void update()
+    {
+        m_bindlessManager.update();
+    }
+
+    VkDescriptorSet getDescriptorSet() const
+    {
+        return m_bindlessManager.getDescriptorSet();
+    }
+
     void waitIdle();
 
 public:
@@ -83,7 +129,9 @@ public:
     VkDevice getDevice() const { return m_device; }
 
     VkSurfaceKHR getSurface() const { return m_surface; }
+
     Swapchain &getSwapchain() { return m_swapchain; }
+    VkExtent2D getExtent() const { return m_swapchain.getExtent(); }
 
     VmaAllocator getAllocator() const { return m_allocator; }
 
@@ -96,6 +144,19 @@ public:
 
     VkQueue getGraphicsQueue() const { return m_graphicsQueue; }
     VkQueue getPresentQueue() const { return m_presentQueue; }
+
+    u32 getGraphicsQueueFamilyIndex() const
+    {
+        return m_queueFamilyIndices.graphicsFamily.value();
+    }
+
+    u32 getPresentQueueFamilyIndex() const
+    {
+        return m_queueFamilyIndices.presentFamily.value();
+    }
+
+    u32 getCurrentFrame() const { return m_currentFrame; }
+    u32 getImageIndex() const { return m_imageIndex; }
 
 private:
     struct FrameData

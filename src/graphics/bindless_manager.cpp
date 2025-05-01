@@ -207,8 +207,6 @@ u32 BindlessManager::addTexture(
     VkSampler sampler
 )
 {
-    std::cout << "Adding texture: " << image.getWidth() << "x" << image.getHeight() << std::endl;
-
     VkImageView imageView = image.getImageView();
     if (imageView == VK_NULL_HANDLE) {
         throw std::runtime_error("Image view is not created.");
@@ -246,11 +244,7 @@ void BindlessManager::removeResource(u32 id)
         return;
     }
 
-    m_resources[id].isUsed = false;
-    
-    m_resources[id].buffer = VK_NULL_HANDLE;
-    m_resources[id].offset = 0;
-    m_resources[id].range = 0;
+    m_resources[id] = ResourceSlot{};
 }
 
 void BindlessManager::update()
@@ -347,22 +341,7 @@ u32 BindlessManager::addResourceInternal(
         return ~0u;
     }
 
-    u32 baseIndex;
-    switch (type) {
-        case ResourceType::UBO:
-            baseIndex = 0;
-            break;
-        case ResourceType::SSBO:
-            baseIndex = MAX_UBOS;
-            break;
-        case ResourceType::TEXTURE:
-            baseIndex = MAX_UBOS + MAX_SSBOS;
-            break;
-        default:
-            return ~0u;
-    }
-
-    u32 index = baseIndex + nextIndex;
+    u32 index = nextIndex;
 
     m_resources[index].type = type;
     m_resources[index].binding = binding;

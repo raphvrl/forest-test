@@ -207,6 +207,8 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surfa
     VkPhysicalDeviceFeatures2 deviceFeatures{};
     deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     deviceFeatures.features.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.features.geometryShader = VK_TRUE;
+    deviceFeatures.features.wideLines = VK_TRUE;
     deviceFeatures.pNext = &vulkan12Features;
     
     std::vector<const char*> deviceExtensions = {
@@ -350,9 +352,20 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     UNUSED(pUserData);
     UNUSED(messageType);
 
-    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-        std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
-        std::cerr << std::endl;
+    switch (messageSeverity) {
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            core::Logger::warn(
+                "Validation layer: " + std::string(pCallbackData->pMessage)
+            );
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            core::Logger::error(
+                "Validation layer: " + std::string(pCallbackData->pMessage)
+            );
+            break;
+
+        default:
+            break;
     }
     
     return VK_FALSE;

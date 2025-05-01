@@ -16,6 +16,7 @@
 #include <map>
 
 #include "core/types.hpp"
+#include "core/logger/logger.hpp"
 #include "utils.hpp"
 
 namespace gfx::vk

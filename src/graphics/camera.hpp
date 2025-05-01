@@ -16,7 +16,6 @@ public:
 
     void update();
 
-
 public:
     void setPosition(const glm::vec3 &pos) { m_pos = pos; }
     void setFront(const glm::vec3 &front) { m_front = front; }
@@ -30,6 +29,11 @@ public:
     void setAspect(f32 aspect) { m_aspect = aspect; }
     void setNearPlane(f32 value) { m_near = value; }
     void setFarPlane(f32 value) { m_far = value; }
+
+    void setOrthoLeft(f32 value) { m_orthoLeft = value; }
+    void setOrthoRight(f32 value) { m_orthoRight = value; }
+    void setOrthoBottom(f32 value) { m_orthoBottom = value; }
+    void setOrthoTop(f32 value) { m_orthoTop = value; }
 
 public:
     const glm::vec3 &getPosition() const { return m_pos; }
@@ -48,6 +52,13 @@ public:
     f32 getFar() const { return m_far; }
 
     const glm::mat4 &getProjection() const { return m_proj; }
+
+    f32 getOrthoLeft() const { return m_orthoLeft; }
+    f32 getOrthoRight() const { return m_orthoRight; }
+    f32 getOrthoBottom() const { return m_orthoBottom; }
+    f32 getOrthoTop() const { return m_orthoTop; }
+
+    const glm::mat4 &getOrtho() const { return m_ortho; }
 
 private:
     glm::vec3 m_pos;
@@ -69,6 +80,13 @@ private:
     f32 m_far;
 
     glm::mat4 m_proj;
+
+    f32 m_orthoLeft;
+    f32 m_orthoRight;
+    f32 m_orthoBottom; 
+    f32 m_orthoTop;
+
+    glm::mat4 m_ortho;
 };
 
 } // namespace gfx

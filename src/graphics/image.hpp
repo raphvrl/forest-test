@@ -3,7 +3,12 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
+#include <string>
+#include <filesystem>
+
 #include "core/types.hpp"
+
+namespace fs = std::filesystem;
 
 namespace gfx
 {
@@ -37,6 +42,8 @@ public:
     void generateMipmaps();
 
     void copyFromBuffer(Buffer &buffer);
+
+    bool isValid() const { return m_image != VK_NULL_HANDLE; }
 
 public:
     VkImage getImage() const { return m_image; }
@@ -86,7 +93,7 @@ private:
 
     void init(
         Device &device,
-        const std::string &filepath,
+        const fs::path &filepath,
         VkFormat format = VK_FORMAT_R8G8B8A8_SRGB,
         VkImageUsageFlags additionalUsage = 0,
         bool mipmaps = true,

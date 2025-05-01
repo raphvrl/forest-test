@@ -32,8 +32,18 @@ void Camera::update()
     m_up = glm::normalize(glm::cross(m_right, m_front));
 
     m_view = glm::lookAt(m_pos, m_pos + m_front, m_up);
+
     m_proj = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
     m_proj[1][1] *= -1;
+
+    m_ortho = glm::ortho(
+        m_orthoLeft,
+        m_orthoRight,
+        m_orthoBottom,
+        m_orthoTop,
+        -m_far,
+        m_far
+    );
 }
 
 } // namespace gfx
