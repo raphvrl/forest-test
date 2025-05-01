@@ -16,6 +16,11 @@ public:
 
     void update();
 
+    void move(const glm::vec3 &direction, f32 speed);
+
+    void rotate(f32 xOffset, f32 yOffset);
+    void rotate(const glm::vec2 &offset) { rotate(offset.x, offset.y); }
+
 public:
     void setPosition(const glm::vec3 &pos) { m_pos = pos; }
     void setFront(const glm::vec3 &front) { m_front = front; }

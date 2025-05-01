@@ -1,5 +1,5 @@
 #include <iostream>
-#include "core/game.hpp"
+#include "core/game/game.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -8,15 +8,15 @@
 int main()
 {
 #ifdef _WIN32
-    SetDllDirectoryW(L"bin");
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 #endif
-
 
     try {
         core::Game game;
         game.run();
     } catch (const std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        core::Logger::error(e.what());
         return EXIT_FAILURE;
     }
 

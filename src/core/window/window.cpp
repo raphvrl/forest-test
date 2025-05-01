@@ -35,6 +35,16 @@ void Window::init(u32 width, u32 height, const std::string &title)
     m_nativeWindow = glfwGetX11Window(m_window);
 #endif
 
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    if (mode) {
+        int screenWidth = mode->width;
+        int screenHeight = mode->height;
+        int windowPosX = (screenWidth - m_width) / 2;
+        int windowPosY = (screenHeight - m_height) / 2;
+        
+        glfwSetWindowPos(m_window, windowPosX, windowPosY);
+    }
+
     m_keys.fill(false);
     m_prevKeys.fill(false);
 
@@ -71,6 +81,7 @@ void Window::framebufferSizeCallback(
     Window *self = static_cast<Window *>(glfwGetWindowUserPointer(window));
     self->m_width = width;
     self->m_height = height;
+    self->m_framebufferResized = true;
 }
 
 void Window::keyCallback(

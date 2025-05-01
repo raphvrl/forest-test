@@ -53,6 +53,12 @@ public:
         VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
     );
 
+    void copyBuffer(
+        Buffer &srcBuffer,
+        Buffer &dstBuffer,
+        VkDeviceSize size = VK_WHOLE_SIZE
+    );
+
     Image createImage(
         u32 width,
         u32 height,

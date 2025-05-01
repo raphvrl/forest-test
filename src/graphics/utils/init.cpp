@@ -385,7 +385,7 @@ VkDebugUtilsMessengerEXT createDebugMessenger(VkInstance instance)
                              VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = debugCallback;
     
-    VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
     VkResult res = CreateDebugUtilsMessengerEXT(
         instance,
         &createInfo,

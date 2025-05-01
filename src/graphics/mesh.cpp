@@ -4,10 +4,18 @@ namespace gfx
 {
 
 void Mesh::init(
-    Device& device,
-    const std::vector<Vertex>& vertices,
-    const std::vector<u32>& indices)
+    Device &device,
+    const std::vector<Vertex> &vertices,
+    const std::vector<u32> &indices)
 {
+    if (vertices.empty()) {
+        throw std::runtime_error("Mesh has no vertices!");
+    }
+
+    if (indices.empty()) {
+        throw std::runtime_error("Mesh has no indices!");
+    }
+
     m_device = &device;
     m_vertexCount = static_cast<u32>(vertices.size());
     m_indexCount = static_cast<u32>(indices.size());
@@ -15,29 +23,37 @@ void Mesh::init(
     VkDeviceSize vertexBufferSize = sizeof(Vertex) * vertices.size();
     VkDeviceSize indexBufferSize = sizeof(u32) * indices.size();
 
+    Buffer stagingVertexBuffer = device.createBuffer(
+        vertexBufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_MEMORY_USAGE_CPU_ONLY
+    );
+
     m_vertexBuffer = device.createBuffer(
         vertexBufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VMA_MEMORY_USAGE_CPU_TO_GPU
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VMA_MEMORY_USAGE_GPU_ONLY
     );
 
-    m_vertexBuffer.uploadData(
-        vertices.data(),
-        m_vertexCount
+    stagingVertexBuffer.uploadData(vertices);
+    device.copyBuffer(stagingVertexBuffer, m_vertexBuffer, vertexBufferSize);
+    stagingVertexBuffer.destroy();
+
+    Buffer stagingIndexBuffer = device.createBuffer(
+        indexBufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VMA_MEMORY_USAGE_CPU_ONLY
     );
 
-    if (m_indexCount > 0) {
-        m_indexBuffer = device.createBuffer(
-            indexBufferSize,
-            VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VMA_MEMORY_USAGE_CPU_TO_GPU
-        );
+    m_indexBuffer = device.createBuffer(
+        indexBufferSize,
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VMA_MEMORY_USAGE_GPU_ONLY
+    );
 
-        m_indexBuffer.uploadData(
-            indices.data(),
-            m_indexCount
-        );
-    }
+    stagingIndexBuffer.uploadData(indices);
+    device.copyBuffer(stagingIndexBuffer, m_indexBuffer, indexBufferSize);
+    stagingIndexBuffer.destroy();
 }
 
 void Mesh::destroy()
@@ -50,26 +66,20 @@ void Mesh::bind(VkCommandBuffer cmd) const
 {
     VkBuffer vertexBuffers[] = { m_vertexBuffer.getBuffer() };
     VkDeviceSize offsets[] = { 0 };
+
     vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
 
-    if (m_indexCount > 0)
-    {
-        vkCmdBindIndexBuffer(
-            cmd,
-            m_indexBuffer.getBuffer(),
-            0,
-            VK_INDEX_TYPE_UINT32
-        );
-    }
+    vkCmdBindIndexBuffer(
+        cmd,
+        m_indexBuffer.getBuffer(),
+        0,
+        VK_INDEX_TYPE_UINT32
+    );
 }
 
 void Mesh::draw(VkCommandBuffer cmd) const
 {
-    if (m_indexCount > 0) {
-        vkCmdDrawIndexed(cmd, m_indexCount, 1, 0, 0, 0);
-    } else {
-        vkCmdDraw(cmd, m_vertexCount, 1, 0, 0);
-    }
+    vkCmdDrawIndexed(cmd, m_indexCount, 1, 0, 0, 0);
 }
 
 } // namespace gfx

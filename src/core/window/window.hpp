@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
-#include <glm/ext.hpp>
+#include <glm/glm.hpp>
 
 #include <string>
 #include <stdexcept>
@@ -33,11 +33,16 @@ public:
     void pollEvents();
 
 public:
-
     bool shouldClose() const { return glfwWindowShouldClose(m_window); }
     void close() { glfwSetWindowShouldClose(m_window, GLFW_TRUE); }
 
+    void setCursorMode(int mode) {
+        glfwSetInputMode(m_window, GLFW_CURSOR, mode);
+    }
+
 public:
+    bool isFramebufferResized() const { return m_framebufferResized; }
+    void resetFramebufferResized() { m_framebufferResized = false; }
 
     bool isKeyPressed(int key) const { return m_keys[key]; }
     bool isKeyJustPressed(int key) const {
@@ -49,7 +54,6 @@ public:
     }
 
 public:
-
     glm::vec2 getMousePos() const { return m_mousePos; }
     glm::vec2 getMouseRel() const { return m_mouseRel; }
     
@@ -73,6 +77,8 @@ private:
     u32 m_width;
     u32 m_height;
     std::string m_title;
+
+    bool m_framebufferResized = false;
 
     std::array<bool, GLFW_KEY_LAST + 1> m_keys;
     std::array<bool, GLFW_KEY_LAST + 1> m_prevKeys;

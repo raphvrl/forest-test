@@ -46,4 +46,23 @@ void Camera::update()
     );
 }
 
+void Camera::move(const glm::vec3 &direction, f32 speed)
+{
+    glm::vec3 movement = glm::vec3(0.0f);
+
+    if (direction.x != 0.0f) movement += m_right * direction.x;
+    if (direction.y != 0.0f) movement += m_up * direction.y;
+    if (direction.z != 0.0f) movement += m_front * direction.z;
+
+    m_pos += movement * speed;
+}
+
+void Camera::rotate(f32 xOffset, f32 yOffset)
+{
+    m_yaw += xOffset;
+    m_pitch += yOffset;
+
+    m_pitch = glm::clamp(m_pitch, -89.0f, 89.0f);
+}
+
 } // namespace gfx

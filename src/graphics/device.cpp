@@ -81,7 +81,7 @@ VkCommandBuffer Device::beginFrame()
     auto [imageIndex, image] = m_swapchain.acquireNextImage(m_currentFrame);
     m_imageIndex = imageIndex;
 
-    if (m_swapchain.isOutOfDate()) {
+    if (m_swapchain.isOutOfDate() && m_window->isFramebufferResized()) {
         recreateSwapchain();
         return VK_NULL_HANDLE;
     }
@@ -133,7 +133,7 @@ void Device::endFrame(VkCommandBuffer cmd)
     m_swapchain.submit(m_currentFrame, cmd, m_graphicsQueue);
     m_swapchain.present(m_currentFrame, m_presentQueue);
 
-    if (m_swapchain.isOutOfDate()) {
+    if (m_swapchain.isOutOfDate() && m_window->isFramebufferResized()) {
         recreateSwapchain();
         return;
     }
@@ -344,6 +344,34 @@ Buffer Device::createBuffer(
     return buffer;
 }
 
+void Device::copyBuffer(
+    Buffer &srcBuffer,
+    Buffer &dstBuffer,
+    VkDeviceSize size
+)
+{
+    if (size == 0) {
+        size = srcBuffer.getSize();
+    }
+
+    VkCommandBuffer cmd = beginSingleTimeCommands();
+
+    VkBufferCopy copyRegion = {};
+    copyRegion.srcOffset = 0;
+    copyRegion.dstOffset = 0;
+    copyRegion.size = size;
+
+    vkCmdCopyBuffer(
+        cmd,
+        srcBuffer.getBuffer(),
+        dstBuffer.getBuffer(),
+        1,
+        &copyRegion
+    );
+
+    endSingleTimeCommands(cmd);
+}
+
 Image Device::createImage(
     u32 width,
     u32 height,
@@ -427,6 +455,8 @@ void Device::recreateSwapchain()
         glfwWaitEvents();
         return;
     }
+
+    m_window->resetFramebufferResized();
 
     m_swapchain.recreate(width, height);
     m_depthBuffer.resize(width, height);

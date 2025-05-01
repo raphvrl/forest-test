@@ -30,6 +30,8 @@ file(GLOB_RECURSE HEADERS
     src/*.hpp
 )
 
+set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
+
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
@@ -73,7 +75,10 @@ function(compile_shader SHADER_SOURCE)
     add_custom_command(
         OUTPUT ${SPIRV_OUTPUT}
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/assets/shaders"
-        COMMAND ${GLSLC_EXECUTABLE} -o ${SPIRV_OUTPUT} ${SHADER_SOURCE}
+        COMMAND ${GLSLC_EXECUTABLE} 
+                -I${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/include
+                -o ${SPIRV_OUTPUT} 
+                ${SHADER_SOURCE}
         DEPENDS ${SHADER_SOURCE}
         COMMENT "Compiling shader ${SHADER_FILENAME} -> assets/shaders"
         VERBATIM
